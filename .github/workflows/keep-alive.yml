@@ -1,0 +1,17 @@
+name: Keep Render Instance Alive
+
+on:
+  schedule:
+    # Runs every 14 minutes
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send HTTP request
+        run: |
+          curl -X GET https://trademind-waitlist.onrender.com/
+          echo "Ping sent at $(date)"
+        shell: bash
