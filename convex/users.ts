@@ -16,12 +16,11 @@ export const createUser = mutation({
       .first()
 
     if (existingUser) {
-      throw new Error("Email already exists")
+      throw new Error("Account already exists. Please sign in instead.")
     }
 
     const userId = await ctx.db.insert("users", {
       ...args,
-      providerId: null,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     })

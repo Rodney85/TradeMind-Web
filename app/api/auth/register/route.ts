@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server"
 import { registerSchema } from "@/lib/validations/auth"
 import { hash } from "bcryptjs"
-import { ZodError } from "zod"
+import { ConvexHttpClient } from "convex/browser"
+import { api } from "@/convex/_generated/api"
+
+// Create Convex client only if URL is available
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+if (!convexUrl) {
+  throw new Error("NEXT_PUBLIC_CONVEX_URL is not set")
+}
+const convex = new ConvexHttpClient(convexUrl)
 
 export async function POST(req: Request) {
   try {
@@ -15,14 +23,15 @@ export async function POST(req: Request) {
     })
     
     if (!validatedFields.success) {
-      // Get the first error message from the Zod error
-      const formattedErrors = validatedFields.error.format()
+      // Get the first error message
+      const errorData = validatedFields.error.format()
       let errorMessage = "Invalid fields"
       
-      // Check each field for errors
-      for (const [field, error] of Object.entries(formattedErrors)) {
-        if (field !== '_errors' && error?._errors?.length > 0) {
-          errorMessage = error._errors[0]
+      // Look for field-specific errors
+      for (const [field, value] of Object.entries(errorData)) {
+        if (field === '_errors') continue
+        if (typeof value === 'object' && '_errors' in value && value._errors.length > 0) {
+          errorMessage = value._errors[0]
           break
         }
       }
@@ -35,17 +44,42 @@ export async function POST(req: Request) {
 
     const { email, password, name } = validatedFields.data
     
-    // Hash the password
-    const hashedPassword = await hash(password, 12)
-    
-    // Here we'll add the Convex mutation to create the user
-    // For now, we'll just return a success response
-    console.log('Registration successful for:', email)
-    
-    return NextResponse.json(
-      { message: "Account created successfully! Redirecting to dashboard..." },
-      { status: 201 }
-    )
+    try {
+      // Hash the password
+      const hashedPassword = await hash(password, 12)
+      
+      // Store user in Convex
+      await convex.mutation(api.users.createUser, {
+        email,
+        name,
+        hashedPassword,
+        authProvider: 'credentials'
+      })
+      
+      return NextResponse.json(
+        { message: "Account created successfully! Redirecting to dashboard..." },
+        { status: 201 }
+      )
+    } catch (error: any) {
+      console.error("Error creating user:", error)
+      
+      // Check if it's a duplicate email error
+      if (error.message.includes("Account already exists")) {
+        return NextResponse.json(
+          { 
+            message: "An account with this email already exists. Please sign in instead.",
+            type: "EXISTING_ACCOUNT"
+          },
+          { status: 400 }
+        )
+      }
+      
+      // For other errors, return a generic error message
+      return NextResponse.json(
+        { message: "Failed to create account. Please try again." },
+        { status: 500 }
+      )
+    }
   } catch (error) {
     console.error("Registration error:", error)
     return NextResponse.json(

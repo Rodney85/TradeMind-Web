@@ -19,12 +19,10 @@ export function SignUpForm() {
     confirmPassword: "",
     name: ""
   })
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showPasswords, setShowPasswords] = useState(false)
   const [passwordError, setPasswordError] = useState("")
 
   const validatePassword = (password: string) => {
-    // Use the same regex as the schema validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
     const isValid = passwordRegex.test(password)
 
@@ -39,7 +37,6 @@ export function SignUpForm() {
       return false
     }
     
-    // Clear the error when password is valid
     if (isValid && passwordError) {
       setPasswordError("")
     }
@@ -78,6 +75,13 @@ export function SignUpForm() {
       setTimeout(() => {
         router.push("/dashboard")
       }, 1500)
+    } else if (result.type === "EXISTING_ACCOUNT") {
+      toast.error(result.message, {
+        action: {
+          label: "Sign In",
+          onClick: () => router.push("/sign-in")
+        }
+      })
     } else {
       toast.error(result.message || "Something went wrong. Please try again.")
     }
@@ -85,12 +89,10 @@ export function SignUpForm() {
 
   return (
     <div className="relative">
-      {/* Card container with gradient border */}
       <div className="relative rounded-lg border border-blue-500/20 bg-background/95 backdrop-blur-sm shadow-2xl">
         <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10" />
         
         <div className="relative p-8 space-y-6">
-          {/* Header */}
           <div className="space-y-2 text-center">
             <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               Create an account
@@ -101,7 +103,6 @@ export function SignUpForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Social login buttons */}
             <div className="grid grid-cols-2 gap-4">
               <Button 
                 type="button"
@@ -123,7 +124,6 @@ export function SignUpForm() {
               </Button>
             </div>
 
-            {/* Divider */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-blue-500/20" />
@@ -135,7 +135,6 @@ export function SignUpForm() {
               </div>
             </div>
 
-            {/* Form fields */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -174,7 +173,7 @@ export function SignUpForm() {
                   <Input
                     id="password"
                     placeholder="Create a password"
-                    type={showPassword ? "text" : "password"}
+                    type={showPasswords ? "text" : "password"}
                     autoComplete="new-password"
                     className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20 pr-10"
                     value={formData.password}
@@ -183,10 +182,10 @@ export function SignUpForm() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowPasswords(!showPasswords)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? (
+                    {showPasswords ? (
                       <Icons.eyeOff className="h-4 w-4" />
                     ) : (
                       <Icons.eye className="h-4 w-4" />
@@ -204,24 +203,13 @@ export function SignUpForm() {
                   <Input
                     id="confirmPassword"
                     placeholder="Confirm your password"
-                    type={showConfirmPassword ? "text" : "password"}
+                    type={showPasswords ? "text" : "password"}
                     autoComplete="new-password"
                     className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20 pr-10"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     disabled={isLoading}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {showConfirmPassword ? (
-                      <Icons.eyeOff className="h-4 w-4" />
-                    ) : (
-                      <Icons.eye className="h-4 w-4" />
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
@@ -238,7 +226,6 @@ export function SignUpForm() {
             </Button>
           </form>
 
-          {/* Footer */}
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link 

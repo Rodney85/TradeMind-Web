@@ -1,67 +1,82 @@
-import { NextAuthOptions } from "next-auth"
-import NextAuth from "next-auth/next"
+import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { loginSchema } from "@/lib/validations/auth"
-import type { User } from "next-auth"
-import { compare } from "bcryptjs"
+import { ConvexHttpClient } from "convex/browser"
+import { api } from "@/convex/_generated/api"
+import { verifyPassword } from "@/lib/auth"
 
-interface CustomUser extends User {
-  id: string
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      email: string
+      name: string
+    }
+  }
+  interface User {
+    id: string
+    email: string
+    name: string
+  }
 }
 
-export const authOptions: NextAuthOptions = {
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+
+const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials): Promise<CustomUser | null> {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("Missing credentials")
         }
 
         try {
-          // Validate the credentials
-          const validatedFields = loginSchema.safeParse({
-            email: credentials.email,
-            password: credentials.password,
+          // Get user from Convex
+          const user = await convex.query(api.users.getUserByEmail, { 
+            email: credentials.email 
           })
 
-          if (!validatedFields.success) {
-            return null
+          if (!user) {
+            throw new Error("No user found")
           }
 
-          // For now, we'll accept any valid credentials
-          // Later we'll add proper user verification
+          // Verify password
+          const isValid = await verifyPassword(credentials.password, user.hashedPassword)
+
+          if (!isValid) {
+            throw new Error("Invalid password")
+          }
+
           return {
-            id: "1",
-            email: credentials.email,
-            name: "User"
+            id: user._id,
+            email: user.email,
+            name: user.name
           }
         } catch (error) {
           console.error("Auth error:", error)
-          return null
+          throw error
         }
       }
     })
   ],
   pages: {
-    signIn: "/sign-in",
-    error: "/sign-in"
+    signIn: "/sign-in"
   },
   session: {
     strategy: "jwt"
   },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id
       }
       return token
     },
-    session({ session, token }) {
+    async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string
       }
@@ -69,7 +84,6 @@ export const authOptions: NextAuthOptions = {
     }
   },
   secret: process.env.NEXTAUTH_SECRET
-}
+})
 
-const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }
