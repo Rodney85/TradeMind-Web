@@ -1,124 +1,253 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
 import { Icons } from "@/components/ui/icons"
+import { useAuth } from "@/hooks/useAuth"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { Label } from "@/components/ui/label"
 
 export function SignUpForm() {
+  const { register, isLoading } = useAuth()
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: ""
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
+
+  const validatePassword = (password: string) => {
+    // Use the same regex as the schema validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
+    const isValid = passwordRegex.test(password)
+
+    console.log('Password validation:', {
+      isValid,
+      password,
+      currentError: passwordError
+    })
+
+    if (!isValid) {
+      setPasswordError("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+      return false
+    }
+    
+    // Clear the error when password is valid
+    if (isValid && passwordError) {
+      setPasswordError("")
+    }
+    return true
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value
+    setFormData(prev => ({ ...prev, password: newPassword }))
+    validatePassword(newPassword)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Submitting with password:', formData.password)
+    
+    if (!validatePassword(formData.password)) {
+      console.log('Password validation failed')
+      return
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match")
+      return
+    }
+    
+    const result = await register({
+      email: formData.email,
+      password: formData.password,
+      name: formData.name,
+      confirmPassword: formData.confirmPassword
+    })
+    
+    if (result.success) {
+      toast.success("Account created successfully!")
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 1500)
+    } else {
+      toast.error(result.message || "Something went wrong. Please try again.")
+    }
+  }
+
   return (
-    <div className="relative z-20">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-lg" />
-      <div className="bg-card/50 backdrop-blur-xl rounded-lg border border-blue-500/10 shadow-xl p-8 relative space-y-6">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-blue-400">
-            Create an account
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your details below to create your account
-          </p>
-        </div>
-
-        <div className="grid gap-4">
-          <div className="grid grid-cols-2 gap-6">
-            <Button variant="outline" className="bg-background/50 border-blue-500/20">
-              <Icons.google className="mr-2 h-4 w-4" />
-              Google
-            </Button>
-            <Button variant="outline" className="bg-background/50 border-blue-500/20">
-              <Icons.apple className="mr-2 h-4 w-4" />
-              Apple
-            </Button>
+    <div className="relative">
+      {/* Card container with gradient border */}
+      <div className="relative rounded-lg border border-blue-500/20 bg-background/95 backdrop-blur-sm shadow-2xl">
+        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10" />
+        
+        <div className="relative p-8 space-y-6">
+          {/* Header */}
+          <div className="space-y-2 text-center">
+            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              Create an account
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Enter your details to create your account
+            </p>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-muted-foreground/20" />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Social login buttons */}
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                type="button"
+                variant="outline" 
+                className="bg-background/50 border-blue-500/20 hover:bg-blue-500/10 transition-colors"
+                disabled={isLoading}
+              >
+                <Icons.google className="mr-2 h-4 w-4" />
+                Google
+              </Button>
+              <Button 
+                type="button"
+                variant="outline" 
+                className="bg-background/50 border-blue-500/20 hover:bg-blue-500/10 transition-colors"
+                disabled={isLoading}
+              >
+                <Icons.apple className="mr-2 h-4 w-4" />
+                Apple
+              </Button>
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card/50 px-2 text-muted-foreground">
-                Or continue with email
-              </span>
-            </div>
-          </div>
 
-          <form className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="name"
-                className="text-sm text-muted-foreground/80 ml-1"
-              >
-                Full Name
-              </label>
-              <Input
-                id="name"
-                type="text"
-                autoCapitalize="words"
-                autoComplete="name"
-                autoCorrect="off"
-                className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 transition-colors"
-              />
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-blue-500/20" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background/95 px-2 text-muted-foreground">
+                  Or continue with email
+                </span>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm text-muted-foreground/80 ml-1"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email-sign-up"
-                type="email"
-                placeholder="example@email.com"
-                autoCapitalize="none"
-                autoComplete="new-email"
-                autoCorrect="off"
-                defaultValue=""
-                className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 transition-colors"
-              />
+
+            {/* Form fields */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your name"
+                  type="text"
+                  autoCapitalize="words"
+                  autoComplete="name"
+                  className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  placeholder="name@example.com"
+                  type="email"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoCorrect="off"
+                  className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    placeholder="Create a password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20 pr-10"
+                    value={formData.password}
+                    onChange={handlePasswordChange}
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPassword ? (
+                      <Icons.eyeOff className="h-4 w-4" />
+                    ) : (
+                      <Icons.eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordError && (
+                  <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    placeholder="Confirm your password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 focus:ring-blue-500/20 pr-10"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <Icons.eyeOff className="h-4 w-4" />
+                    ) : (
+                      <Icons.eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="text-sm text-muted-foreground/80 ml-1"
-              >
-                Password
-              </label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 transition-colors"
-              />
-            </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="confirm-password"
-                className="text-sm text-muted-foreground/80 ml-1"
-              >
-                Confirm Password
-              </label>
-              <Input
-                id="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                className="bg-background/50 border-blue-500/20 focus:border-blue-500/30 transition-colors"
-              />
-            </div>
-            <Button className="w-full relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/80 to-purple-400/80 group-hover:from-blue-400 group-hover:to-purple-400 transition-all duration-300" />
-              <span className="relative text-white/90 group-hover:text-white">Create Account</span>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+              disabled={isLoading}
+            >
+              {isLoading && (
+                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Create Account
             </Button>
           </form>
-        </div>
 
-        <div className="text-center text-sm">
-          <span className="text-muted-foreground">Already have an account? </span>
-          <Link
-            href="/sign-in"
-            className="text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            Sign in
-          </Link>
+          {/* Footer */}
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link 
+              href="/sign-in" 
+              className="font-medium text-blue-400 hover:text-blue-300 hover:underline transition-colors"
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
       </div>
     </div>

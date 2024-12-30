@@ -1,3 +1,5 @@
+"use client"
+
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { AuthWrapper } from "@/components/auth/auth-wrapper";
 
