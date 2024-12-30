@@ -34,29 +34,41 @@ export function Navbar() {
             <span className="font-semibold text-lg">TradeMind</span>
           </div>
           
-          {/* Spacer */}
-          <div className="flex-1" />
-
           {/* Desktop Navigation and Button */}
-          <div className="hidden md:flex items-center space-x-8">
-            <nav className="flex items-center space-x-6">
-              {navLinks.map((link) => (
-                <button
-                  key={link.label}
-                  onClick={() => scrollToSection(link.href)}
-                  className="text-sm font-medium transition-colors hover:text-foreground/80 text-foreground/60"
+          <div className="hidden md:flex flex-1 items-center justify-between">
+            {/* Center Nav Links */}
+            <div className="flex-1 flex justify-center">
+              <nav className="flex items-center space-x-8">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.label}
+                    onClick={() => scrollToSection(link.href)}
+                    className="text-sm font-medium transition-colors hover:text-foreground/80 text-foreground/60"
+                  >
+                    {link.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            
+            {/* Auth Buttons */}
+            <div className="flex items-center space-x-4">
+              <Link href="/sign-in">
+                <Button 
+                  variant="outline"
+                  className="h-10 px-6 whitespace-nowrap text-sm border-blue-400/50 hover:border-blue-400/80 hover:bg-gradient-to-r hover:from-blue-400/10 hover:to-purple-400/10 transition-all duration-200"
                 >
-                  {link.label}
-                </button>
-              ))}
-            </nav>
-            <Button 
-              onClick={() => scrollToSection('#hero')}
-              className="h-10 px-6 whitespace-nowrap text-sm bg-gradient-to-r from-blue-400/80 to-purple-400/80 hover:from-blue-400 hover:to-purple-400 text-white/90 hover:text-white transition-all duration-200 shadow-lg shadow-blue-500/20"
-            >
-              <LineChart className="mr-2 h-4 w-4" />
-              Join Waitlist
-            </Button>
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/sign-up">
+                <Button 
+                  className="h-10 px-6 whitespace-nowrap text-sm bg-gradient-to-r from-blue-400/80 to-purple-400/80 hover:from-blue-400 hover:to-purple-400 text-white/90 hover:text-white transition-all duration-200 shadow-lg shadow-blue-500/20"
+                >
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -85,13 +97,23 @@ export function Navbar() {
                   {link.label}
                 </button>
               ))}
-              <Button 
-                onClick={() => scrollToSection('#hero')}
-                className="w-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 hover:from-blue-400 hover:to-purple-400 text-white/90 hover:text-white transition-all duration-200 shadow-lg shadow-blue-500/20"
-              >
-                <LineChart className="mr-2 h-4 w-4" />
-                Join Waitlist
-              </Button>
+              <div className="flex flex-col space-y-2">
+                <Link href="/sign-in" className="w-full">
+                  <Button 
+                    variant="outline"
+                    className="w-full text-sm border-blue-400/50 hover:border-blue-400/80 hover:bg-gradient-to-r hover:from-blue-400/10 hover:to-purple-400/10 transition-all duration-200"
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up" className="w-full">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-400/80 to-purple-400/80 hover:from-blue-400 hover:to-purple-400 text-white/90 hover:text-white transition-all duration-200 shadow-lg shadow-blue-500/20"
+                  >
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             </nav>
           </div>
         )}
