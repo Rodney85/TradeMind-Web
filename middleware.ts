@@ -3,33 +3,22 @@ import { NextResponse } from "next/server"
 
 export default withAuth(
   function middleware(req) {
-    // Get the pathname
-    const path = req.nextUrl.pathname
-
-    // Public paths that don't require authentication
-    const isPublicPath = path === "/" || 
-                        path === "/sign-in" || 
-                        path === "/sign-up" || 
-                        path.startsWith("/api/auth")
-
-    // Check if user is authenticated
-    const isAuthenticated = !!req.nextauth.token
-
-    // Allow public paths for everyone
-    if (isPublicPath) {
-      return NextResponse.next()
-    }
-
-    // Redirect unauthenticated users to login
-    if (!isAuthenticated) {
-      return NextResponse.redirect(new URL("/sign-in", req.url))
-    }
-
     return NextResponse.next()
   },
   {
     callbacks: {
-      authorized({ token }) {
+      authorized: ({ req, token }) => {
+        const pathname = req.nextUrl.pathname
+        
+        // Allow access to auth-related pages without a token
+        if (pathname.startsWith('/sign-in') || 
+            pathname.startsWith('/sign-up') || 
+            pathname.startsWith('/forgot-password') ||
+            pathname.startsWith('/reset-password')) {
+          return true
+        }
+        
+        // Require token for all other pages
         return !!token
       },
     },

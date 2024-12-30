@@ -27,4 +27,13 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_status", ["status"]),
+  
+  resetTokens: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(), // Unix timestamp
+    used: v.boolean(),
+  })
+  .index("by_token", ["token"])
+  .index("by_user", ["userId"])
 })

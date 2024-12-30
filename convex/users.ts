@@ -38,3 +38,15 @@ export const getUserByEmail = query({
       .first()
   },
 })
+
+export const updatePassword = mutation({
+  args: {
+    userId: v.id("users"),
+    hashedPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      hashedPassword: args.hashedPassword,
+    })
+  },
+})
