@@ -9,6 +9,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Label } from "@/components/ui/label"
+import { passwordSchema } from "@/lib/validations/auth"
 
 export function SignUpForm() {
   const { register, isLoading } = useAuth()
@@ -23,23 +24,12 @@ export function SignUpForm() {
   const [passwordError, setPasswordError] = useState("")
 
   const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/
-    const isValid = passwordRegex.test(password)
-
-    console.log('Password validation:', {
-      isValid,
-      password,
-      currentError: passwordError
-    })
-
-    if (!isValid) {
-      setPasswordError("Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character")
+    const result = passwordSchema.shape.password.safeParse(password)
+    if (!result.success) {
+      setPasswordError(result.error.errors[0].message)
       return false
     }
-    
-    if (isValid && passwordError) {
-      setPasswordError("")
-    }
+    setPasswordError("")
     return true
   }
 

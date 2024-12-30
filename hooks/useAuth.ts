@@ -1,7 +1,13 @@
 import { signIn } from "next-auth/react"
 
+interface AuthResponse {
+  success: boolean
+  message?: string
+  type?: string
+}
+
 export function useAuth() {
-  const login = async ({ email, password }: { email: string; password: string }) => {
+  const login = async ({ email, password }: { email: string; password: string }): Promise<AuthResponse> => {
     try {
       const result = await signIn("credentials", {
         email,
@@ -30,7 +36,7 @@ export function useAuth() {
     password: string
     name: string
     confirmPassword: string
-  }) => {
+  }): Promise<AuthResponse> => {
     try {
       if (password !== confirmPassword) {
         return { success: false, message: "Passwords do not match" }
@@ -50,18 +56,16 @@ export function useAuth() {
       console.log('Registration response:', { status: response.status, result })
 
       if (!response.ok) {
-        return { success: false, message: result.message || "Registration failed" }
+        return { 
+          success: false, 
+          message: result.message,
+          type: result.type 
+        }
       }
 
-      // Auto login after registration
-      const loginResult = await login({ email, password })
-      if (!loginResult.success) {
-        return { success: false, message: "Registration successful but login failed" }
-      }
-
-      return { success: true, message: "Account created successfully!" }
+      return { success: true, message: result.message }
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error("Registration error:", error)
       return { success: false, message: "An error occurred during registration" }
     }
   }
